@@ -65,7 +65,3 @@ def log_det(matrix):
     """
     L = cholesky(matrix)
     return 2*np.sum(np.log(np.diag(L)))
-
-
-def trace_inv(matrix):
-    np.trace(np.linalg.inv(matrix))
