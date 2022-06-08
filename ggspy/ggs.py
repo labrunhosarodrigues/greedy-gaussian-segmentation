@@ -25,39 +25,47 @@ def miu(x):
     return np.mean(x, axis=0)
 
 
+miu_vec = np.vectorize(miu)
+
+
 def sigma(x, lambda_):
 
     sample_cov = np.cov(x.T, bias=True)
-    m, n = sample_cov.shape
+    m, n = x.shape
     return sample_cov + (lambda_/m)*np.identity(n)
 
 
-def objective(sigma):
+sigma_vec = np.vectorize(sigma)
+
+
+def likelihood(sigma):
 
     return -.5*log_det(sigma)
 
 
-def likelihood(b, x, lambda_):
+likelihood_vec = np.vectorize(likelihood)
+
+
+def objective(b, x, lambda_):
 
     like = 0.0
-    for b_start, b_end in zip([b[:-1], b[1:]]):
-        x_temp = x[b_start:b_end, :]
-        temp_sigma = sigma(x_temp, lambda_)
-        like += objective(temp_sigma)
+    segments = np.split(x, b[1:-1])
+    sigmas = sigma_vec(segments, lambda_=lambda_)
+    like = np.sum(likelihood_vec(sigmas))
     
     return like
 
 
 def split(x, lambda_):
 
-    orig_like = objective(sigma(x, lambda_))
+    orig_like = likelihood(sigma(x, lambda_))
     max_t = 0
     max_increase = np.NINF
 
-    for t in range(1, len(x)-1):
+    for t in range(1, x.shape[0]-1):
         sigma_left = sigma(x[:t], lambda_)
         sigma_right = sigma(x[t:], lambda_)
-        new_like = objective(sigma_left) + objective(sigma_right)
+        new_like = likelihood(sigma_left) + likelihood(sigma_right)
 
         if (new_like-orig_like) > max_increase:
             max_increase = new_like-orig_like
@@ -79,41 +87,42 @@ def add_point(x, b, lambda_):
 
 def adjust_points(x, b, lambda_):
 
-    def step(x, b_old):
-        b_new = np.copy(b_old)
+    def step():
         change = False
         for i in range(1, b.size-1):
-            t, _ = split(x[b[i-1]:b[b[i+1]]], lambda_)
+            t, _ = split(x[b[i-1]:b[i+1]], lambda_)
             t += b[i-1]
-            if t != b_old[i]:
-                b_new[i] = t
+            if t != b[i]:
+                b[i] = t
                 change = True
-        return b_new, change
-    
-    b_old = b
-    change = True
+        return change
 
-    while not change:
-        b_old, change = step(x, b_old)
+    while not step():
+        pass
 
-    return b_old
+    return b
 
 
 def gss(x, lambda_, K):
 
-    b = [0, len(x)]
-    for k in range(K):
-        t, inc = add_point(x, b, lambda_)
+    T, n = x.shape
 
-        if inc < 0:
-            return b[1:-1]
+    b = np.zeros(K+2)
+    b[1] = T
+    for k in range(2, K+2):
+        # find best new breakpoint
+        t, inc = add_point(x, b[:k], lambda_)
+
+        # insert new breakpoint if it improves objective
+        if inc <= 0:
+            return b[1:k]
         else:
-            i = 0
-            for i in range(k):
-                if b[i] > t:
-                    break
-            b = b[:i]+[t]+b[i:]
+            i = np.searchsorted(b[:k], t)
+            b = b[:i]
+            b[i+1:k+1] = b[i:k]
+            b[i] = t
         
-        b = adjust_points(x, b, lambda_)
+        # adjust breakpoints
+        b[:k+1] = adjust_points(x, b[:k+1], lambda_)
     
     return b[1:-1]
