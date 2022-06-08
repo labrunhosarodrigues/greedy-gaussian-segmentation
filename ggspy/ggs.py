@@ -58,9 +58,9 @@ def sigma(x, lambda_):
 sigma_vec = np.vectorize(sigma)
 
 
-def likelihood(sigma):
+def likelihood(sigma, m):
 
-    return -.5*log_det(sigma)
+    return -.5*m*log_det(sigma)
 
 
 likelihood_vec = np.vectorize(likelihood)
@@ -78,14 +78,15 @@ def objective(b, x, lambda_):
 
 def split(x, lambda_):
 
-    orig_like = likelihood(sigma(x, lambda_))
+    m, _ = x.shape
+    orig_like = likelihood(sigma(x, lambda_), m)
     max_t = 0
     max_increase = np.NINF
-
+    
     for t in range(1, x.shape[0]-1):
         sigma_left = sigma(x[:t], lambda_)
         sigma_right = sigma(x[t:], lambda_)
-        new_like = likelihood(sigma_left) + likelihood(sigma_right)
+        new_like = likelihood(sigma_left, t) + likelihood(sigma_right, m-t)
 
         if (new_like-orig_like) > max_increase:
             max_increase = new_like-orig_like
@@ -117,17 +118,17 @@ def adjust_points(x, b, lambda_):
                 change = True
         return change
 
-    while not step():
-        pass
+    while step():
+        continue
 
     return b
 
 
-def gss(x, lambda_, K):
+def ggs(x, lambda_, K):
 
     T, n = x.shape
 
-    b = np.zeros(K+2)
+    b = np.zeros(K+2, dtype=np.int32)
     b[1] = T
     for k in range(2, K+2):
         # find best new breakpoint
@@ -138,7 +139,6 @@ def gss(x, lambda_, K):
             return b[1:k]
         else:
             i = np.searchsorted(b[:k], t)
-            b = b[:i]
             b[i+1:k+1] = b[i:k]
             b[i] = t
         
