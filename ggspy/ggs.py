@@ -13,12 +13,32 @@ Greedy Gaussian Segmentation.
 # built-in
 
 # local
-from matrix import log_det
 
 # 3rd-party
 import numpy as np
+from numpy import linalg
 
 # CardioID
+
+
+def log_det(matrix):
+    """
+    Compute the log-determinant of a
+    positive definite matrix using its
+    Cholensky decomposition.
+
+    Parameters
+    ----------
+    matrix : n-by-n array
+        matrix.
+
+    Returns
+    -------
+    float
+        Log-det of the matrix.
+    """
+    L = linalg.cholesky(matrix)
+    return 2*np.sum(np.log(np.diag(L)))
 
 
 def miu(x):
