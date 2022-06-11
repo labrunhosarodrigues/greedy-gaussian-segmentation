@@ -4,9 +4,6 @@ examples.random_data
 -------------
 
 GGS example with randomly generated data.
-
-:copyright: (c) 2022 by CardioID Technologies Lda.
-:license: All rights reserved.
 """
 # Imports
 
@@ -19,8 +16,6 @@ from ggspy import ggs
 # 3rd-party
 import numpy as np
 from GGS import ggs as base_ggs
-
-# CardioID
 
 
 def generate_covariance(N):

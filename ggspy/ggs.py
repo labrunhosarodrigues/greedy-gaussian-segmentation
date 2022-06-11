@@ -4,9 +4,6 @@ ggspy.ggs
 -------------
 
 Greedy Gaussian Segmentation.
-
-:copyright: (c) 2022 by CardioID Technologies Lda.
-:license: All rights reserved.
 """
 # Imports
 
@@ -146,7 +143,7 @@ def ggs(x, lambda_, K, track=False):
     T, _ = x.shape
 
     b = np.zeros(K+2, dtype=np.int32)
-    b[1] = T
+    b[1] = T+1
     if track:
         _obj = [objective(b[:2], x, lambda_)]
     for k in range(2, K+2):
