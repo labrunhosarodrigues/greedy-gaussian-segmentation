@@ -1,5 +1,7 @@
 # project-specific
 
+raw.*
+
 # IDE
 .vscode
 .project

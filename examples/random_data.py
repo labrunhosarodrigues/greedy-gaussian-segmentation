@@ -16,6 +16,8 @@ from ggspy import ggs
 # 3rd-party
 import numpy as np
 from GGS import ggs as base_ggs
+import plotly.graph_objects as go
+import plotly.offline as po
 
 
 def generate_covariance(N):
@@ -52,7 +54,7 @@ if __name__ == "__main__":
 
     K = 9
     N = 3
-    lambda_ = 0.001
+    lambda_ = 0.1
 
     data, breaks = generate(K=K, N=N)
 
@@ -64,6 +66,44 @@ if __name__ == "__main__":
     b2, ll2 = base_ggs.GGS(data=data.T, Kmax=K, lamb=lambda_)
     t22 = timeit.default_timer()
 
-    print(f"{breaks}\n{b} -> {t12-t11}\n{b2[-1]} -> {t22-t21}")
+    print(f"{b} -> {t12-t11}\n{b2[-1]} -> {t22-t21}")
     print(f"{ll1}\n{ll2}")
+
+    fig = go.Figure()
+    data_traces = data.T
+    for trace in data_traces:
+        fig.add_trace(
+            go.Scatter(
+                y=trace,
+                mode="lines"
+            )
+        )
+    
+    for bb in b[1:-1]:
+        fig.add_vline(x=bb, line_color="red", )
+    for bb in b2[-1][1:-1]:
+        fig.add_vline(x=bb, line_color="blue")
+    
+    po.plot(fig, filename="randomData_breakpoints.html")
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=list(range(K+1)),
+            y=ll1,
+            mode="lines",
+            name="ggspy-ggs"
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=list(range(K+1)),
+            y=ll2,
+            mode="lines",
+            name="cvxggs-ggs"
+        )
+    )
+
+    po.plot(fig, filename="randomData_LL.html")
 
