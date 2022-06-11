@@ -11,12 +11,14 @@ GGS example with randomly generated data.
 # Imports
 
 # built-in
+import timeit
 
 # local
 from ggspy import ggs
 
 # 3rd-party
 import numpy as np
+from GGS import ggs as base_ggs
 
 # CardioID
 
@@ -59,7 +61,14 @@ if __name__ == "__main__":
 
     data, breaks = generate(K=K, N=N)
 
-    b = ggs.ggs(data, lambda_, K)
+    t11 = timeit.default_timer()
+    b, ll1 = ggs.ggs(data, lambda_, K, track=True)
+    t12 = timeit.default_timer()
 
-    print(f"{breaks}\n{b}")
+    t21 = timeit.default_timer()
+    b2, ll2 = base_ggs.GGS(data=data.T, Kmax=K, lamb=lambda_)
+    t22 = timeit.default_timer()
+
+    print(f"{breaks}\n{b} -> {t12-t11}\n{b2[-1]} -> {t22-t21}")
+    print(f"{ll1}\n{ll2}")
 

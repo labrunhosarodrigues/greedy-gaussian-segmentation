@@ -141,12 +141,14 @@ def adjust_points(x, b, lambda_):
     return b
 
 
-def ggs(x, lambda_, K):
+def ggs(x, lambda_, K, track=False):
 
     T, _ = x.shape
 
     b = np.zeros(K+2, dtype=np.int32)
     b[1] = T
+    if track:
+        _obj = [objective(b[:2], x, lambda_)]
     for k in range(2, K+2):
         # find best new breakpoint
         t, inc, pos = add_point(x, b[:k], lambda_)
@@ -160,5 +162,11 @@ def ggs(x, lambda_, K):
         
         # adjust breakpoints
         b[:k+1] = adjust_points(x, b[:k+1], lambda_)
+
+        if track:
+            _obj.append(objective(b[:k+1], x, lambda_))
     
-    return b[1:-1]
+    if track:
+        return b, _obj
+    else:
+        return b, None
