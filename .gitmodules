@@ -1,0 +1,3 @@
+[submodule "GGS"]
+	path = GGS
+	url = https://github.com/cvxgrp/GGS
