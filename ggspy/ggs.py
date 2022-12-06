@@ -8,6 +8,7 @@ Greedy Gaussian Segmentation.
 # Imports
 
 # built-in
+import copy
 
 # local
 
@@ -77,7 +78,17 @@ def split(x, lambda_):
     right_S = (m-1)*(np.cov(x[1:].T, bias=True) + np.outer(right_miu, right_miu))
     
 
-    for t in range(1, m-1):
+    for t in range(2, m-1):
+        
+        
+        contribution = np.outer(x[t-1], x[t-1])
+
+        left_S = left_S + contribution
+        left_miu = left_miu + (x[t-1]-left_miu)/(t)
+        
+        right_S = right_S - contribution
+        right_miu = right_miu - (x[t-1]-right_miu)/(m-t)
+        
         sigma_left = (left_S/t - np.outer(left_miu, left_miu)) + (lambda_/t)*np.identity(n)
         sigma_right = (right_S/(m-t) - np.outer(right_miu, right_miu)) + (lambda_/(m-t))*np.identity(n)
         new_like = likelihood(sigma_left, t) + likelihood(sigma_right, m-t)
@@ -85,16 +96,6 @@ def split(x, lambda_):
         if (new_like-orig_like) > max_increase:
             max_increase = new_like-orig_like
             max_t = t
-        
-        contribution = np.outer(x[t], x[t])
-
-        left_S = left_S + contribution
-        left_miu = left_miu + (x[t]-left_miu)/(t+1)
-        
-        right_S = right_S - contribution
-        right_miu = right_miu - (x[t]-right_miu)/(m-t-1)
-        sigma_right = (right_S/(m-t-1) - np.outer(right_miu, right_miu)) + (lambda_/(m-t-1))*np.identity(n)
-        
      
     return max_t, max_increase
 
@@ -131,28 +132,34 @@ def adjust_points(x, b, lambda_):
             else:
                 changed[i] = False
         return change
-
+    j = 0
     while step():
+        j +=1
         continue
 
     return b
 
 
-def ggs(x, lambda_, K, track=False):
-
+def ggs(data, K, lambda_, track=True):
+    x = data.T
     T, _ = x.shape
 
     b = np.zeros(K+2, dtype=np.int32)
     b[1] = T+1
     if track:
         _obj = [objective(b[:2], x, lambda_)]
+        breaks = [b[:2].copy()]
     for k in range(2, K+2):
+        
         # find best new breakpoint
         t, inc, pos = add_point(x, b[:k], lambda_)
 
         # insert new breakpoint if it improves objective
         if inc <= 0:
-            return b[1:k]
+            if track:
+                return breaks, _obj
+            else:
+                return b, None
         else:
             b[pos+1:k+1] = b[pos:k]
             b[pos] = t
@@ -162,8 +169,9 @@ def ggs(x, lambda_, K, track=False):
 
         if track:
             _obj.append(objective(b[:k+1], x, lambda_))
+            breaks.append(b[:k+1].copy())
     
     if track:
-        return b, _obj
+        return breaks, _obj
     else:
         return b, None

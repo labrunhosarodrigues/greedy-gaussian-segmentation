@@ -42,17 +42,18 @@ if __name__ == "__main__":
     data, timestamps = get_data()
 
     t11 = timeit.default_timer()
-    b, ll1 = ggs.ggs(data, lambda_, K, track=True)
+    b, ll1 = ggs.ggs(data.T, K, lambda_, track=True)
     t12 = timeit.default_timer()
 
     t21 = timeit.default_timer()
     b2, ll2 = base_ggs.GGS(data=data.T, Kmax=K, lamb=lambda_)
     t22 = timeit.default_timer()
 
-    print(f"{b} -> {t12-t11}\n{b2[-1]} -> {t22-t21}")
+    print(f"{b[-1]} -> {t12-t11}\n{b2[-1]} -> {t22-t21}")
     print(f"{ll1}\n{ll2}")
 
     Labels = ["Stocks", "Oil", "GVT bonds"]
+    colors = ["#00CC96", "#AB63FA", "#FFA15A"]
     fig = go.Figure()
     data_traces = data.T
     for trace in data_traces:
@@ -61,14 +62,15 @@ if __name__ == "__main__":
                 x=timestamps,
                 y=np.cumsum(trace),
                 mode="lines",
-                name=Labels.pop()
+                name=Labels.pop(),
+                line_color = colors.pop()
             )
         )
     
-    for bb in b[1:-1]:
-        fig.add_vline(x=timestamps[bb], line_color="red", )
+    for bb in b[-1][1:-1]:
+        fig.add_vline(x=timestamps[bb], yref="paper", y1=1, y0=0.5, line_color="blue", )
     for bb in b2[-1][1:-1]:
-        fig.add_vline(x=timestamps[bb], line_color="blue")
+        fig.add_vline(x=timestamps[bb], yref="paper", y1=0.5, y0=0, line_color="red")
     
     po.plot(fig, filename="finantialData_breakpoints.html")
 
@@ -92,4 +94,47 @@ if __name__ == "__main__":
     )
 
     po.plot(fig, filename="finatialData_LL.html")
+
+    # base_cross_val = base_ggs.GGSCrossVal(data.T, Kmax=30, lambList=[1e-6, 1e-4, 1e-2])
+    # print(base_cross_val)
+
+    # fig = go.Figure()
+    # for lamb, (train, test) in base_cross_val:
+    #     fig.add_trace(
+    #         go.Scatter(
+    #             y=train,
+    #             mode="lines",
+    #             name=f"\lambda={lamb}, train"
+    #         )
+    #     )
+    #     fig.add_trace(
+    #         go.Scatter(
+    #             y=test,
+    #             mode="lines",
+    #             name=f"\lambda={lamb}, test"
+    #         )
+    #     )
+    # po.plot(fig, filename="finance_base_CV.html")
+
+    # new_cross_val = base_ggs.GGSCrossVal(data.T, Kmax=30, lambList=[1e-6, 1e-4, 1e-2], func=ggs.ggs)
+    # print(new_cross_val)
+
+    # fig = go.Figure()
+    # for lamb, (train, test) in new_cross_val:
+    #     fig.add_trace(
+    #         go.Scatter(
+    #             y=train,
+    #             mode="lines",
+    #             name=f"\lambda={lamb}, train"
+    #         )
+    #     )
+    #     fig.add_trace(
+    #         go.Scatter(
+    #             y=test,
+    #             mode="lines",
+    #             name=f"\lambda={lamb}, test"
+    #         )
+    #     )
+    # po.plot(fig, filename="finance_new_CV.html")
+    
 
