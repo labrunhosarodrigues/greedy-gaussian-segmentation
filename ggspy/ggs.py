@@ -69,7 +69,7 @@ def split(x, lambda_):
     m, n = x.shape
     orig_like = likelihood(sigma(x, lambda_), m)
     max_t = 0
-    max_increase = np.NINF
+    max_increase = -np.inf
     
     left_miu = x[0]
     left_S = np.outer(x[0], x[0])
@@ -101,7 +101,7 @@ def split(x, lambda_):
 
 def add_point(x, b, lambda_):
     candidate_t = -1
-    candidate_inc = np.NINF
+    candidate_inc = 
     position = 0
     
     for i in range(b.size-1):

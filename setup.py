@@ -18,7 +18,7 @@ LICENSE = None
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-     "numpy",
+     "numpy>=2.0.0",
 ]
 
 # What packages are optional?
